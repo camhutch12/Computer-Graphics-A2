@@ -1,147 +1,328 @@
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
-
-// Source.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
-#define FILENAME "img.tif"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
+#include "Point.h";
 #include <freeglut.h>
-#include <FreeImage.h>
+#include <vector>
+#include <stack>
+#include <stdio.h>
+#include "Line.h"
+#include "Source.h"
+using namespace std;
 
-//the pixel structure
-typedef struct {
-	GLubyte r, g, b;
-} pixel;
+/*
+Written By:
+Cameron Hutchings (6427892)
+Daniel Gannage (6368898)
+*/
 
-//the global structure
+/*
+The global structure
+*/
 typedef struct {
-	pixel* data;
+
 	int w, h;
 } glob;
 glob global;
 
+// Enumerate menu items
 enum { MENU_FILTER, MENU_SAVE, MENU_TRIANGLE, MENU_QUIT };
 
-//read image
-pixel* read_img(char* name, int* width, int* height) {
-	FIBITMAP* image;
-	int i, j, pnum;
-	RGBQUAD aPixel;
-	pixel* data;
 
-	if ((image = FreeImage_Load(FIF_TIFF, name, 0)) != NULL) {
-		*width = FreeImage_GetWidth(image);
-		*height = FreeImage_GetHeight(image);
-
-		data = (pixel*)malloc((*height) * (*width) * sizeof(pixel*));
-		if (data == NULL) {
-			return NULL; 
-		}
-		pnum = 0;
-		for (i = 0; i < (*height); i++) {
-			for (j = 0; j < (*width); j++) {
-				FreeImage_GetPixelColor(image, j, i, &aPixel);
-				data[pnum].r = (aPixel.rgbRed);
-				data[pnum].g = (aPixel.rgbGreen);
-				data[pnum++].b = (aPixel.rgbBlue);
-			}
-		}
-		FreeImage_Unload(image);
-		return data;
-	}
-	return NULL;
-}//read_img
-
- //write_img
-void write_img(char* name, pixel* data, int width, int height) {
-	FIBITMAP* image;
-	RGBQUAD aPixel;
-	int i, j;
-
-	image = FreeImage_Allocate(width, height, 24, 0, 0, 0);
-	if (!image) {
-		perror("FreeImage_Allocate");
-		return;
-	}
-	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j++) {
-			aPixel.rgbRed = data[i * width + j].r;
-			aPixel.rgbGreen = data[i * width + j].g;
-			aPixel.rgbBlue = data[i * width + j].b;
-
-			FreeImage_SetPixelColor(image, j, i, &aPixel);
-		}
-	}
-	if (!FreeImage_Save(FIF_TIFF, image, name, 0)) {
-		perror("FreeImage_Save");
-	}
-	FreeImage_Unload(image);
-}//write_img
-
-
- /*draw the image - it is already in the format openGL requires for glDrawPixels*/
+/*
+Draw the image - it is already in the format openGL requires for glDrawPixels
+*/
 void display_image(void)
 {
-	glDrawPixels(global.w, global.h, GL_RGB, GL_UNSIGNED_BYTE, (GLubyte*)global.data);
+	//glDrawPixels(global.w, global.h, GL_RGB, GL_UNSIGNED_BYTE, (GLubyte*)global.data);
 	glFlush();
-}//display_image()
-
- // Read the screen image back to the data buffer after drawing to it
-void draw_triangle(void)
-{
-	glDrawPixels(global.w, global.h, GL_RGB, GL_UNSIGNED_BYTE, (GLubyte*)global.data);
-	glBegin(GL_TRIANGLES);
-	glColor3f(1.0, 0, 0);
-	glVertex2i(rand() % global.w, rand() % global.h);
-	glColor3f(0, 1.0, 0);
-	glVertex2i(rand() % global.w, rand() % global.h);
-	glColor3f(0, 0, 1.0);
-	glVertex2i(rand() % global.w, rand() % global.h);
-	glEnd();
-	glFlush();
-	glReadPixels(0, 0, global.w, global.h, GL_RGB, GL_UNSIGNED_BYTE, (GLubyte*)global.data);
 }
 
-/* A simple thresholding filter.
+
+
+/*
+This method checks to see if a given point already exists in the vector
 */
-void MyFilter(pixel* Im, int myIm_Width, int myIm_Height) {
-	int x, y;
+bool doesPointExist(vector<Point*> points, int x2, int y2) {
 
-	for (x = 0; x < myIm_Width; x++)
-		for (y = 0; y < myIm_Height; y++) {
-			if (Im[x + y * myIm_Width].b > 128)
-				Im[x + y * myIm_Width].b = 255;
-			else
-				Im[x + y * myIm_Width].b = 0;
+	// check if point exists
+	// iterate through points in vector
+	for (auto p = points.begin(); p != points.end(); ++p) {
+		// get next point
+		Point* pt = *p;
+		// get point components
+		int x1 = pt->x;
+		int y1 = pt->y;
+		// check if both points are the same
+		if (x2 == x1 && y2 == y1) {
+			return true; // this point already exists!
+		}
+	}
+	return false; // all good, point does not exist
+}
 
-			if (Im[x + y * myIm_Width].g > 128)
-				Im[x + y * myIm_Width].g = 255;
-			else
-				Im[x + y * myIm_Width].g = 0;
+/*
+This initializes a
+*/
+vector<Point*> initPoints(void) {
 
-			if (Im[x + y * myIm_Width].r > 128)
-				Im[x + y * myIm_Width].r = 255;
-			else
-				Im[x + y * myIm_Width].r = 0;
+	vector<Point*> pointArray;
+	/*
+		int pointAmount = 100;
+		for (int i = 0; i < pointAmount; i++) {
+
+			// generate random number between 100 and 400
+			int min = 100;
+			int max = 400;
+			int randX = min + rand() % (max - min + 1);
+			int randY = min + rand() % (max - min + 1);
+
+
+			// check to see if point already exists
+			if (doesPointExist(pointArray, randX, randY) == false) {
+				// add point to vector
+				pointArray.push_back(new Point(randX, randY));
+			}
+			else {
+				// create new points
+				randX = min + rand() % (max - min + 1);
+				randY = min + rand() % (max - min + 1);
+				// add point to vector
+				pointArray.push_back(new Point(randX, randY));
+				//TODO:: CHECK AGAIN
+			}
+
+		}
+	*/
+
+	pointArray.push_back(new Point(250, 400));
+	pointArray.push_back(new Point(100, 250));
+	pointArray.push_back(new Point(150, 100));
+	pointArray.push_back(new Point(150, 100));
+	pointArray.push_back(new Point(200, 200));
+	pointArray.push_back(new Point(300, 250));
+	pointArray.push_back(new Point(350, 50));
+	pointArray.push_back(new Point(500, 150));
+	pointArray.push_back(new Point(350, 350));
+	pointArray.push_back(new Point(350, 150));
+
+	return pointArray;
+}
+
+/*
+This method grabs the lowest point on the y-axis and chooses that as the starting point
+*/
+int getStartingPoint(vector<Point*> pointArray) {
+
+	int index = -1;
+	int minY = 1000;
+	// go through all points in vector
+	for (size_t i = 0; i < pointArray.size(); i++)
+	{
+		Point* pt = pointArray[i];
+		int x = pt->x;
+		int y = pt->y;
+		if (minY > y) {
+			minY = y;
+			index = i;
+		}
+	}
+
+	return index;
+}
+
+/*
+This method creates a new line between the starting
+point and the next point in the vector and uses the convex hull algorithm
+to check whether the line is valid
+*/
+bool checkLine(Point* currentPoint, Point* nextPoint, vector<Point*> pointArray) {
+
+	//get coordinates
+	int x1 = currentPoint->x; // current point
+	int y1 = currentPoint->y;
+
+	int x2 = nextPoint->x; // next point
+	int y2 = nextPoint->y;
+
+	int a = y1 - y2;
+	int b = x2 - x1;
+	int c = (x1 * y2) - (y1 * x2);
+
+	int pos = 0;
+	int neg = 0;
+	int onLine = 0;
+
+	// get all points in vector except current/next point involved in the line in question
+	for (size_t i = 0; i != pointArray.size(); i++) {
+		// get next point
+		Point* pt = pointArray[i];
+		// get point components
+		int x = pt->x;
+		int y = pt->y;
+
+		// check if points being used
+		if ((x == x1 && y == y1) || (x == x2 && y == y2)) {
+			//skip
+		}
+		else {
+
+			// convex hull: create imaginary line 'd' between two points
+			// 0 = ax+by+c (our line where all points compared to are on the line)
+			// d = ax+by+c 
+			int d = ((a * x) + (b * y) + c) / sqrt((a * a) + (b * b));
+
+			// check if all points are above or below line (check if d is positive or negative)
+			// if d=0, then point is on line
+			if (d > 0) {
+				pos++;
+			}
+			else if (d < 0) {
+				neg++;
+			}
+			else {
+				// d = 0
+				onLine++;
+			}
+		}
+	}
+
+	// check if all points are on one side of the line (either pos or neg is 0)
+	if (pos == 0 || neg == 0) {
+		return true;  // valid line in convex hull
+	}
+	else {
+		return false; // invalid convex hull line
+	}
+
+}
+
+/*
+This method goes through all the points that are pssed in as a
+vector and finds the set of x,y coordinates with the lowest y value. Then
+it draws this point to the canvas
+*/
+void drawInitialPoints(std::vector<Point*>& pointArray, int start)
+{
+
+	// iterate through points in vector
+	for (size_t i = 0; i != pointArray.size(); i++) {
+
+		// get next point
+		Point* pt = pointArray[i];
+		// get point components
+		int x = pt->x;
+		int y = pt->y;
+
+		// draw point
+		glPointSize(10);
+		glBegin(GL_POINTS);
+		if (start == i) {
+			glColor3f(0.0, 0.0, 1.0);
+		}
+		else {
+			glColor3f(1.0, 0, 0);
+		}
+		glVertex2i(x, y);
+		glFlush();
+		glEnd();
+	}
+}
+
+/*
+This method goes through all the lines that are pssed in as a
+stack and then draws those to the canvas in the stack order
+*/
+void drawLines(stack<Line*>& lineStack)
+{
+
+	// iterate through points in vector
+	for (size_t i = 0; i != lineStak.size(); i++) {
+
+		// get next point
+		Point* pt = pointArray[i];
+		// get point components
+		int x = pt->x;
+		int y = pt->y;
+
+		// draw point
+		glPointSize(10);
+		glBegin(GL_POINTS);
+		if (start == i) {
+			glColor3f(0.0, 0.0, 1.0);
+		}
+		else {
+			glColor3f(1.0, 0, 0);
+		}
+		glVertex2i(x, y);
+		glFlush();
+		glEnd();
+	}
+}
+
+/*
+ This method draws a polygon using open GL
+ */
+void draw_polygon(void)
+{
+
+	// get points
+	vector<Point*> pointArray = initPoints();
+	// create container for out polygon lines
+	stack<Line*> lineStack;
+	// get a starting point (lowest y value)
+	int start = getStartingPoint(pointArray);
+	// draw points in open gl from vector points
+	drawInitialPoints(pointArray, start);
+
+	// draw line from previous point to next point in vector
+	for (size_t i = 0; i != pointArray.size() - 1; i++) {
+
+		// get next point
+		Point* pt = pointArray[i];
+		Point* pt2 = pointArray[i + 1];
+
+		if (checkLine(pt, pt2, pointArray)) {
+			lineStack.push(new Line(pt, pt2));
+			// get point components
+			int x1 = pt->x;
+			int y1 = pt->y;
+			int x2 = pt2->x;
+			int y2 = pt2->y;
+			glPointSize(10);
+			glBegin(GL_LINES);
+			glColor3f(0, 1.0, 0);
+			glVertex2i(x1, y1);
+			glVertex2i(x2, y2);
+			glFlush();
+			glEnd();
 		}
 
-	glutPostRedisplay();	// Tell glut that the image has been updated and needs to be redrawn
-}//My_Filter
+	}
+
+	glutPostRedisplay();
+	//glReadPixels(0, 0, global.w, global.h, GL_RGB, GL_UNSIGNED_BYTE, (GLubyte*)global.data);
+}
+
+/*
+This method gets the equation of the slope of a line
+*/
+double slope(Point p1, Point p2) {
+	return (p2.y - p1.y) / (p2.x - p1.x);
+}
+
+/*
+This method returns the y-intercept for the mx + b equation
+*/
+double findBase(Point p1, Point p2) {
+	return (p2.x * p1.y) - (p1.x * p2.y);
+}
 
 
- /*glut keyboard function*/
+/*
+Glut keyboard function
+*/
 void keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
@@ -153,16 +334,15 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case's':
 	case'S':
-		printf("SAVING IMAGE: backup.tif\n");
-		write_img((char*)"backup.tif", global.data, global.w, global.h);
+		// option
 		break;
 	case 't':
 	case 'T':
-		draw_triangle();
+		draw_polygon();
 		break;
 	case'f':
 	case'F':
-		MyFilter(global.data, global.w, global.h);
+		// option
 		break;
 	}
 }//keyboard
@@ -176,14 +356,13 @@ void menuFunc(int value)
 		exit(0);
 		break;
 	case MENU_SAVE:
-		printf("SAVING IMAGE: backup.tif\n");
-		write_img((char*)"backup.tif", global.data, global.w, global.h);
+		// option
 		break;
 	case MENU_TRIANGLE:
-		draw_triangle();
+		draw_polygon();
 		break;
 	case MENU_FILTER:
-		MyFilter(global.data, global.w, global.h);
+		// option
 		break;
 	}
 }//menuFunc
@@ -191,7 +370,7 @@ void menuFunc(int value)
 
 void show_keys()
 {
-	printf("Q:quit\nF:filter\nT:triangle\nS:save\n");
+	printf("Q:quit\nF:blank\nT:triangle\nS:blank\n");
 }
 
 //Glut menu set up
@@ -199,36 +378,39 @@ void init_menu()
 {
 	int sub_menu = glutCreateMenu(&menuFunc);
 	glutAddMenuEntry("Triangle", MENU_TRIANGLE);
-	glutAddMenuEntry("Filter", MENU_FILTER);
 
 	int main_menu = glutCreateMenu(&menuFunc);
 	glutAddSubMenu("Modify", sub_menu);
-	glutAddMenuEntry("Save", MENU_SAVE);
 	glutAddMenuEntry("Quit", MENU_QUIT);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
+}
+
+void init_data() {
+	global.h = 750;
+	global.w = 750;
 }
 
 
 int main(int argc, char** argv)
 {
-	global.data = read_img((char*)FILENAME, &global.w, &global.h);
-	if (global.data == NULL)
+
+	//global.data = read_img((char*)FILENAME, &global.w, &global.h);
+	/*if (global.data == NULL)
 	{
 		printf("Error loading image file %s\n", (char*)FILENAME);
 		return 1;
-	}
-
+	}*/
+	init_data();
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
 
 	glutInitWindowSize(global.w, global.h);
-	glutCreateWindow("SIMPLE DISPLAY");
+	glutCreateWindow("Convex Hull");
 	glShadeModel(GL_SMOOTH);
 	glutDisplayFunc(display_image);
 	glutKeyboardFunc(keyboard);
 	glMatrixMode(GL_PROJECTION);
 	glOrtho(0, global.w, 0, global.h, 0, 1);
-
 	init_menu();
 	show_keys();
 
