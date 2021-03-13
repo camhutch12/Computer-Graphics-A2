@@ -68,35 +68,35 @@ This initializes a
 vector<Point*> initPoints(void) {
 
 	vector<Point*> pointArray;
-	/*
-		int pointAmount = 100;
-		for (int i = 0; i < pointAmount; i++) {
 
-			// generate random number between 100 and 400
-			int min = 100;
-			int max = 400;
-			int randX = min + rand() % (max - min + 1);
-			int randY = min + rand() % (max - min + 1);
+	int pointAmount = 100;
+	for (int i = 0; i < pointAmount; i++) {
+
+		// generate random number between 100 and 400
+		int min = 100;
+		int max = 400;
+		int randX = min + rand() % (max - min + 1);
+		int randY = min + rand() % (max - min + 1);
 
 
-			// check to see if point already exists
-			if (doesPointExist(pointArray, randX, randY) == false) {
-				// add point to vector
-				pointArray.push_back(new Point(randX, randY));
-			}
-			else {
-				// create new points
-				randX = min + rand() % (max - min + 1);
-				randY = min + rand() % (max - min + 1);
-				// add point to vector
-				pointArray.push_back(new Point(randX, randY));
-				//TODO:: CHECK AGAIN
-			}
-
+		// check to see if point already exists
+		if (doesPointExist(pointArray, randX, randY) == false) {
+			// add point to vector
+			pointArray.push_back(new Point(randX, randY));
 		}
-	*/
+		else {
+			// create new points
+			randX = min + rand() % (max - min + 1);
+			randY = min + rand() % (max - min + 1);
+			// add point to vector
+			pointArray.push_back(new Point(randX, randY));
+			//TODO:: CHECK AGAIN
+		}
 
-	pointArray.push_back(new Point(250, 400));
+	}
+
+
+	/*pointArray.push_back(new Point(250, 400));
 	pointArray.push_back(new Point(100, 250));
 	pointArray.push_back(new Point(150, 100));
 	pointArray.push_back(new Point(150, 100));
@@ -105,7 +105,7 @@ vector<Point*> initPoints(void) {
 	pointArray.push_back(new Point(350, 50));
 	pointArray.push_back(new Point(500, 150));
 	pointArray.push_back(new Point(350, 350));
-	pointArray.push_back(new Point(350, 150));
+	pointArray.push_back(new Point(350, 150));*/
 
 	return pointArray;
 }
@@ -236,29 +236,31 @@ stack and then draws those to the canvas in the stack order
 */
 void drawLines(stack<Line*>& lineStack)
 {
+	// go through stack
+	while (!lineStack.empty()) {
 
-	// iterate through points in vector
-	for (size_t i = 0; i != lineStak.size(); i++) {
 
-		// get next point
-		Point* pt = pointArray[i];
-		// get point components
-		int x = pt->x;
-		int y = pt->y;
+		// get line at top of stack
+		Line* line = lineStack.top();
+		lineStack.pop();
 
-		// draw point
+		// point 1
+		int x1 = line->pt1.x;
+		int y1 = line->pt1.y;
+		// point 2
+		int x2 = line->pt2.x;
+		int y2 = line->pt2.y;
+		//printf("x1: %d",x1);
+
 		glPointSize(10);
-		glBegin(GL_POINTS);
-		if (start == i) {
-			glColor3f(0.0, 0.0, 1.0);
-		}
-		else {
-			glColor3f(1.0, 0, 0);
-		}
-		glVertex2i(x, y);
+		glBegin(GL_LINES);
+		glColor3f(0, 1.0, 0);
+		glVertex2i(x1, y1);
+		glVertex2i(x2, y2);
 		glFlush();
 		glEnd();
 	}
+
 }
 
 /*
@@ -278,31 +280,21 @@ void draw_polygon(void)
 
 	// draw line from previous point to next point in vector
 	for (size_t i = 0; i != pointArray.size() - 1; i++) {
+		for (size_t j = 0; j != pointArray.size() - 1; j++) {
+			// get next point
+			Point* pt = pointArray[i];
+			Point* pt2 = pointArray[j];
 
-		// get next point
-		Point* pt = pointArray[i];
-		Point* pt2 = pointArray[i + 1];
+			if (checkLine(pt, pt2, pointArray)) {
+				lineStack.push(new Line(*pt, *pt2));
+				printf("x1: %d", pt->x);
+			}
 
-		if (checkLine(pt, pt2, pointArray)) {
-			lineStack.push(new Line(pt, pt2));
-			// get point components
-			int x1 = pt->x;
-			int y1 = pt->y;
-			int x2 = pt2->x;
-			int y2 = pt2->y;
-			glPointSize(10);
-			glBegin(GL_LINES);
-			glColor3f(0, 1.0, 0);
-			glVertex2i(x1, y1);
-			glVertex2i(x2, y2);
-			glFlush();
-			glEnd();
 		}
-
 	}
-
+	drawLines(lineStack);
 	glutPostRedisplay();
-	//glReadPixels(0, 0, global.w, global.h, GL_RGB, GL_UNSIGNED_BYTE, (GLubyte*)global.data);
+
 }
 
 /*

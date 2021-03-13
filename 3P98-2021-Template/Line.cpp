@@ -12,8 +12,8 @@ Constructor initializes the variables
 */
 Line::Line(Point p1, Point p2) {
 
-	this->pt1 = pt1;
-	this->pt2 = pt2;
+	this->pt1 = p1;
+	this->pt2 = p2;
 };
 
 /*

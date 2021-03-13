@@ -1,4 +1,4 @@
 ﻿  Source.cpp
 C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(5,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(172,10): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(174,10): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
   3P98-2021-Template.vcxproj -> C:\Users\ch17wj\Source\Repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Debug\3P98-2021-Template.exe
