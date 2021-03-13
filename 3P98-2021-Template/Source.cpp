@@ -1,11 +1,14 @@
 
 #include <stdlib.h>
+#include <cstdio>
 #include <stdio.h>
 #include <malloc.h>
+#include <iostream>
 #include "Point.h";
 #include <freeglut.h>
 #include <vector>
 #include <stack>
+#include <deque>
 #include <stdio.h>
 #include "Line.h"
 #include "Source.h"
@@ -20,6 +23,11 @@ Daniel Gannage (6368898)
 /*
 The global structure
 */
+
+bool isInStack(deque<Line*> stack, Line* line);
+
+
+
 typedef struct {
 
 	int w, h;
@@ -69,13 +77,16 @@ vector<Point*> initPoints(void) {
 
 	vector<Point*> pointArray;
 
-	int pointAmount = 100;
+	int pointAmount = 50;
+	srand(time(NULL));
 	for (int i = 0; i < pointAmount; i++) {
 
 		// generate random number between 100 and 400
-		int min = 100;
-		int max = 400;
+		int min = 10;
+		int max = global.h - 50;
+
 		int randX = min + rand() % (max - min + 1);
+
 		int randY = min + rand() % (max - min + 1);
 
 
@@ -86,6 +97,7 @@ vector<Point*> initPoints(void) {
 		}
 		else {
 			// create new points
+
 			randX = min + rand() % (max - min + 1);
 			randY = min + rand() % (max - min + 1);
 			// add point to vector
@@ -109,11 +121,32 @@ vector<Point*> initPoints(void) {
 
 	return pointArray;
 }
+bool isInHull(Point* pt1, Point* pt2, vector<Line*> currentLine) {
 
+	if (currentLine.size() == 0)
+	{
+		return true;
+
+	}
+	else {
+		for (Line* l : currentLine)
+		{
+			// check if p1 has same x and y coordinate a pt1
+			if ((pt1->x == l->pt1.x) && (pt1->y == l->pt1.y))
+			{
+				return false;
+			}
+			if ((pt2->x == l->pt2.x) && (pt2->y == l->pt2.y)) {
+				return false;
+			}
+		}
+		return true;
+	}
+}
 /*
 This method grabs the lowest point on the y-axis and chooses that as the starting point
 */
-int getStartingPoint(vector<Point*> pointArray) {
+int getStartingPoint(vector<Point*> pointArray, vector<Line*>& currentLines) {
 
 	int index = -1;
 	int minY = 1000;
@@ -123,9 +156,11 @@ int getStartingPoint(vector<Point*> pointArray) {
 		Point* pt = pointArray[i];
 		int x = pt->x;
 		int y = pt->y;
-		if (minY > y) {
-			minY = y;
-			index = i;
+		if (isInHull(pt, pt, currentLines)) {
+			if (minY > y) {
+				minY = y;
+				index = i;
+			}
 		}
 	}
 
@@ -137,63 +172,67 @@ This method creates a new line between the starting
 point and the next point in the vector and uses the convex hull algorithm
 to check whether the line is valid
 */
-bool checkLine(Point* currentPoint, Point* nextPoint, vector<Point*> pointArray) {
+bool checkLine(Point* currentPoint, Point* nextPoint, vector<Point*> pointArray, deque<Line*>& stack) {
+	Line* l = new Line(*currentPoint, *nextPoint);
+	if (isInStack(stack, l)) {
 
-	//get coordinates
-	int x1 = currentPoint->x; // current point
-	int y1 = currentPoint->y;
+		//get coordinates
+		int x1 = currentPoint->x; // current point
+		int y1 = currentPoint->y;
 
-	int x2 = nextPoint->x; // next point
-	int y2 = nextPoint->y;
+		int x2 = nextPoint->x; // next point
+		int y2 = nextPoint->y;
 
-	int a = y1 - y2;
-	int b = x2 - x1;
-	int c = (x1 * y2) - (y1 * x2);
+		int a = y1 - y2;
+		int b = x2 - x1;
+		int c = (x1 * y2) - (y1 * x2);
 
-	int pos = 0;
-	int neg = 0;
-	int onLine = 0;
+		int pos = 0;
+		int neg = 0;
+		int onLine = 0;
 
-	// get all points in vector except current/next point involved in the line in question
-	for (size_t i = 0; i != pointArray.size(); i++) {
-		// get next point
-		Point* pt = pointArray[i];
-		// get point components
-		int x = pt->x;
-		int y = pt->y;
+		// get all points in vector except current/next point involved in the line in question
+		for (size_t i = 0; i != pointArray.size(); i++) {
+			// get next point
+			Point* pt = pointArray[i];
+			// get point components
+			int x = pt->x;
+			int y = pt->y;
 
-		// check if points being used
-		if ((x == x1 && y == y1) || (x == x2 && y == y2)) {
-			//skip
-		}
-		else {
-
-			// convex hull: create imaginary line 'd' between two points
-			// 0 = ax+by+c (our line where all points compared to are on the line)
-			// d = ax+by+c 
-			int d = ((a * x) + (b * y) + c) / sqrt((a * a) + (b * b));
-
-			// check if all points are above or below line (check if d is positive or negative)
-			// if d=0, then point is on line
-			if (d > 0) {
-				pos++;
-			}
-			else if (d < 0) {
-				neg++;
+			// check if points being used
+			if ((x == x1 && y == y1) || (x == x2 && y == y2)) {
+				//skip
 			}
 			else {
-				// d = 0
-				onLine++;
+
+				// convex hull: create imaginary line 'd' between two points
+				// 0 = ax+by+c (our line where all points compared to are on the line)
+				// d = ax+by+c 
+				int d = ((a * x) + (b * y) + c) / sqrt((a * a) + (b * b));
+
+				// check if all points are above or below line (check if d is positive or negative)
+				// if d=0, then point is on line
+				if (d > 0) {
+					pos++;
+				}
+				else if (d < 0) {
+					neg++;
+				}
+				else {
+					// d = 0
+					onLine++;
+				}
 			}
 		}
-	}
 
-	// check if all points are on one side of the line (either pos or neg is 0)
-	if (pos == 0 || neg == 0) {
-		return true;  // valid line in convex hull
-	}
-	else {
-		return false; // invalid convex hull line
+		// check if all points are on one side of the line (either pos or neg is 0)
+		if (pos == 0 || neg == 0) {
+			return true;  // valid line in convex hull
+		}
+		else {
+			return false; // invalid convex hull line
+		}
+
 	}
 
 }
@@ -234,15 +273,16 @@ void drawInitialPoints(std::vector<Point*>& pointArray, int start)
 This method goes through all the lines that are pssed in as a
 stack and then draws those to the canvas in the stack order
 */
-void drawLines(stack<Line*>& lineStack)
+vector<Line*> drawLines(deque<Line*>& lineStack, vector<Line*>& usedPoints)
 {
 	// go through stack
-	while (!lineStack.empty()) {
+	for (int i = lineStack.size(); i > 0; i--) {
 
 
 		// get line at top of stack
-		Line* line = lineStack.top();
-		lineStack.pop();
+		Line* line = lineStack.front();
+		usedPoints.push_back(line);
+		lineStack.pop_front();
 
 		// point 1
 		int x1 = line->pt1.x;
@@ -261,6 +301,74 @@ void drawLines(stack<Line*>& lineStack)
 		glEnd();
 	}
 
+	return usedPoints;
+
+}
+
+bool isInStack(deque<Line*> stack, Line* line) {
+	if (stack.empty()) {
+		return true;
+
+	}
+	else {
+		for (Line* ele : stack) {
+			if ((ele->pt1.x == line->pt1.x && ele->pt1.y == line->pt1.y) && (ele->pt2.x == line->pt2.x && ele->pt2.y == line->pt2.y)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	return true;
+}
+
+void removePointsUsed(vector<Point*>& pointArray, vector<Line*>& usedPoints) {
+	for (size_t i = 0; i < pointArray.size(); i++) {
+		Point* currPoint = pointArray[i];
+		for (size_t j = 0; j < usedPoints.size(); j++) {
+			Point pt1 = usedPoints[j]->pt1;
+			Point pt2 = usedPoints[j]->pt2;
+			if ((pt1.x == currPoint->x && pt1.y == currPoint->y) || (pt2.x == currPoint->x && pt2.y == currPoint->y))
+			{
+				pointArray.erase(pointArray.begin() + i);
+			}
+		}
+	}
+
+}
+
+deque<Line*> convexHull(vector<Point*>& pointArray, vector<Line*>& usedPoints) {
+	stack<Line*> lineStack;
+	deque<Line*> lineDeque;
+
+	// get a starting point (lowest y value)
+
+	// draw points in open gl from vector points
+
+
+	// draw line from previous point to next point in vector
+	for (size_t i = 0; i != pointArray.size() - 1; i++) {
+		for (size_t j = i + 1; j != pointArray.size() - 1; j++) {
+			// get next point
+			Point* pt = pointArray[i];
+			Point* pt2 = pointArray[j];
+
+			if (checkLine(pt, pt2, pointArray, lineDeque)) {
+				if (isInHull(pt, pt2, usedPoints)) {
+					Line* l = new Line(*pt, *pt2);
+					if (isInStack(lineDeque, l)) {
+						lineStack.push(l);
+						lineDeque.push_back(l);
+						printf("x1: %d", pt->x);
+
+					}
+
+				}
+			}
+
+		}
+	}
+	return lineDeque;
 }
 
 /*
@@ -268,32 +376,42 @@ void drawLines(stack<Line*>& lineStack)
  */
 void draw_polygon(void)
 {
-
+	vector<Line*> usedPoints;
+	deque<Line*> lineStack;
 	// get points
 	vector<Point*> pointArray = initPoints();
-	// create container for out polygon lines
-	stack<Line*> lineStack;
-	// get a starting point (lowest y value)
-	int start = getStartingPoint(pointArray);
-	// draw points in open gl from vector points
+
+	int start = getStartingPoint(pointArray, usedPoints);
 	drawInitialPoints(pointArray, start);
 
-	// draw line from previous point to next point in vector
-	for (size_t i = 0; i != pointArray.size() - 1; i++) {
-		for (size_t j = 0; j != pointArray.size() - 1; j++) {
-			// get next point
-			Point* pt = pointArray[i];
-			Point* pt2 = pointArray[j];
-
-			if (checkLine(pt, pt2, pointArray)) {
-				lineStack.push(new Line(*pt, *pt2));
-				printf("x1: %d", pt->x);
-			}
-
-		}
-	}
-	drawLines(lineStack);
+	//while (pointArray.size() > 2) {
+	start = getStartingPoint(pointArray, usedPoints);
+	lineStack = convexHull(pointArray, usedPoints);
+	usedPoints = drawLines(lineStack, usedPoints);
+	removePointsUsed(pointArray, usedPoints);
+	usedPoints.clear();
 	glutPostRedisplay();
+
+	/*start = getStartingPoint(pointArray, usedPoints);
+	lineStack = convexHull(pointArray, usedPoints);
+	usedPoints = drawLines(lineStack, usedPoints);
+	removePointsUsed(pointArray, usedPoints);
+	usedPoints.clear();
+	glutPostRedisplay();
+
+	start = getStartingPoint(pointArray, usedPoints);
+	lineStack = convexHull(pointArray, usedPoints);
+	usedPoints = drawLines(lineStack, usedPoints);
+	removePointsUsed(pointArray, usedPoints);
+	usedPoints.clear();
+	glutPostRedisplay();*/
+
+	//}
+	// TODO: Put line in a new vector which will be used to check if there is any line left 
+	// clear lineStack 
+
+	//lineStack = convexHull(pointArray, usedPoints);
+	//usedPoints = drawLines(lineStack, usedPoints);
 
 }
 
