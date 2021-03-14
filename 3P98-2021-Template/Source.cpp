@@ -24,7 +24,7 @@ Daniel Gannage (6368898)
 The global structure
 */
 
-bool isInStack(deque<Line*> stack, Line* line);
+bool notInStack(deque<Line*> stack, Line* line);
 
 
 
@@ -143,6 +143,25 @@ bool isInHull(Point* pt1, Point* pt2, vector<Line*> currentLine) {
 		return true;
 	}
 }
+
+vector<int> getDirectionBetweenTwoPoints(Point tail, Point tip) {
+	vector<int> v;
+	v.push_back(tail.x - tip.x);
+	v.push_back(tail.y - tip.y);
+	return v;
+
+
+
+}
+int getAngleOfVector(vector<int>& v) {
+	// TODO: Calculate angle of vector
+	return atan(v[1] / v[0]);
+	// if the angle is greater than 45 degees then return false 
+
+	// otherwise we need to return true
+
+}
+
 /*
 This method grabs the lowest point on the y-axis and chooses that as the starting point
 */
@@ -174,7 +193,7 @@ to check whether the line is valid
 */
 bool checkLine(Point* currentPoint, Point* nextPoint, vector<Point*> pointArray, deque<Line*>& stack) {
 	Line* l = new Line(*currentPoint, *nextPoint);
-	if (isInStack(stack, l)) {
+	if (notInStack(stack, l)) {
 
 		//get coordinates
 		int x1 = currentPoint->x; // current point
@@ -305,7 +324,7 @@ vector<Line*> drawLines(deque<Line*>& lineStack, vector<Line*>& usedPoints)
 
 }
 
-bool isInStack(deque<Line*> stack, Line* line) {
+bool notInStack(deque<Line*> stack, Line* line) {
 	if (stack.empty()) {
 		return true;
 
@@ -322,6 +341,8 @@ bool isInStack(deque<Line*> stack, Line* line) {
 	return true;
 }
 
+/*Removes points which were used allow for no duplicates to be used
+this is done for the peel so that it will work properly*/
 void removePointsUsed(vector<Point*>& pointArray, vector<Line*>& usedPoints) {
 	for (size_t i = 0; i < pointArray.size(); i++) {
 		Point* currPoint = pointArray[i];
@@ -356,7 +377,12 @@ deque<Line*> convexHull(vector<Point*>& pointArray, vector<Line*>& usedPoints) {
 			if (checkLine(pt, pt2, pointArray, lineDeque)) {
 				if (isInHull(pt, pt2, usedPoints)) {
 					Line* l = new Line(*pt, *pt2);
-					if (isInStack(lineDeque, l)) {
+					if (notInStack(lineDeque, l)) {
+
+						// get the vector values for the line points
+						//vector<int*>linesVector =
+
+
 						lineStack.push(l);
 						lineDeque.push_back(l);
 						printf("x1: %d", pt->x);
