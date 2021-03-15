@@ -1,6 +1,10 @@
 ﻿  Source.cpp
-C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(7,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(81,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(211,11): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(238): warning C4715: 'checkLine': not all control paths return a value
+C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(9,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(87,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(305,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(306,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(328,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(353,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(367,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\ch17wj\source\repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Source.cpp(264): warning C4715: 'checkLine': not all control paths return a value
   3P98-2021-Template.vcxproj -> C:\Users\ch17wj\Source\Repos\camhutch12\Computer-Graphics-A2\3P98-2021-Template\Debug\3P98-2021-Template.exe

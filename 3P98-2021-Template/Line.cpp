@@ -14,7 +14,12 @@ Line::Line(Point p1, Point p2) {
 
 	this->pt1 = p1;
 	this->pt2 = p2;
+	this->getDistance();
 };
+
+void Line::getDistance(void) {
+	this->distance = this->pt1.euclidenaDistance(this->pt2.x, this->pt2.y);
+}
 
 /*
 Empty constructor
